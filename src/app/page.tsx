@@ -1,95 +1,44 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+import TodoItem from "@/components/TodoItem";
+import { Todo, db } from "@/database";
+import Link from "next/link";
 
-export default function Home() {
+// server Action
+async function markCompleted(isCompleted: Boolean, todoId: string) {
+  "use server";
+  await db.connectDB();
+  await Todo.findByIdAndUpdate(todoId, { isCompleted });
+}
+
+async function getTodos() {
+  await db.connectDB();
+  const todos = JSON.parse(JSON.stringify(await Todo.find()));
+  return todos;
+}
+
+export default async function Home() {
+  const todos = await getTodos();
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div>
+      <div className="flex justify-between items-center">
+        <div className="h3 text-2xl font-bold my-3 capitalize">
+          My todo list
         </div>
+        <Link href="/createTodo">
+          <button className="outline-none p-3 border rounded-md bg-slate-300 cursor-pointer hover:bg-slate-400">
+            Add Todo
+          </button>
+        </Link>
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+      <ol>
+        {todos && todos.length > 0 ? (
+          todos.map((todo) => (
+            <TodoItem {...todo} key={todo.id} markCompleted={markCompleted} />
+          ))
+        ) : (
+          <p>You have no todo's.</p>
+        )}
+      </ol>
+    </div>
+  );
 }
